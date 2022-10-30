@@ -7,12 +7,15 @@ import {
 import { QueryConfig, QueryFunctionArgs } from '../../types'
 import { useChainId, useQuery } from '../utils'
 
-type UseTransactionArgs = Partial<FetchTransactionArgs>
-
+export type UseTransactionArgs = Partial<FetchTransactionArgs>
 export type UseTransactionConfig = QueryConfig<FetchTransactionResult, Error>
 
-const queryKey = ({ chainId, hash }: Partial<FetchTransactionArgs>) =>
-  [{ entity: 'transaction', chainId, hash }] as const
+type QueryKeyArgs = UseTransactionArgs
+type QueryKeyConfig = Pick<UseTransactionConfig, 'cacheKey'>
+
+function queryKey({ chainId, cacheKey, hash }: QueryKeyArgs & QueryKeyConfig) {
+  return [{ entity: 'transaction', cacheKey, chainId, hash }] as const
+}
 
 const queryFn = ({
   queryKey: [{ chainId, hash }],
@@ -33,6 +36,7 @@ const queryFn = ({
  * })
  */
 export function useTransaction({
+  cacheKey,
   cacheTime = 0,
   chainId: chainId_,
   enabled = true,
@@ -45,7 +49,7 @@ export function useTransaction({
 }: UseTransactionArgs & UseTransactionConfig = {}) {
   const chainId = useChainId({ chainId: chainId_ })
 
-  return useQuery(queryKey({ chainId, hash }), queryFn, {
+  return useQuery(queryKey({ cacheKey, chainId, hash }), queryFn, {
     cacheTime,
     enabled: Boolean(enabled && hash),
     staleTime,

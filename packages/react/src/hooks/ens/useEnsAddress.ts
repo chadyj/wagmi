@@ -8,16 +8,14 @@ import { QueryConfig, QueryFunctionArgs } from '../../types'
 import { useChainId, useQuery } from '../utils'
 
 export type UseEnsAddressArgs = Partial<FetchEnsAddressArgs>
-
 export type UseEnsAddressConfig = QueryConfig<FetchEnsAddressResult, Error>
 
-export const queryKey = ({
-  chainId,
-  name,
-}: {
-  chainId?: number
-  name?: string
-}) => [{ entity: 'ensAddress', chainId, name }] as const
+type QueryKeyArgs = UseEnsAddressArgs
+type QueryKeyConfig = Pick<UseEnsAddressConfig, 'cacheKey'>
+
+function queryKey({ chainId, cacheKey, name }: QueryKeyArgs & QueryKeyConfig) {
+  return [{ entity: 'ensAddress', chainId, cacheKey, name }] as const
+}
 
 const queryFn = ({
   queryKey: [{ chainId, name }],
@@ -29,6 +27,7 @@ const queryFn = ({
 export function useEnsAddress({
   cacheTime,
   chainId: chainId_,
+  cacheKey,
   enabled = true,
   name,
   staleTime = 1_000 * 60 * 60 * 24, // 24 hours
@@ -39,7 +38,7 @@ export function useEnsAddress({
 }: UseEnsAddressArgs & UseEnsAddressConfig = {}) {
   const chainId = useChainId({ chainId: chainId_ })
 
-  return useQuery(queryKey({ chainId, name }), queryFn, {
+  return useQuery(queryKey({ chainId, cacheKey, name }), queryFn, {
     cacheTime,
     enabled: Boolean(enabled && chainId && name),
     staleTime,

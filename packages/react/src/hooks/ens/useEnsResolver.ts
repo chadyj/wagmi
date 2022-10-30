@@ -8,16 +8,14 @@ import { QueryConfig, QueryFunctionArgs } from '../../types'
 import { useChainId, useQuery } from '../utils'
 
 export type UseEnsResolverArgs = Partial<FetchEnsResolverArgs>
-
 export type UseEnsResolverConfig = QueryConfig<FetchEnsResolverResult, Error>
 
-export const queryKey = ({
-  chainId,
-  name,
-}: {
-  chainId?: number
-  name?: string
-}) => [{ entity: 'ensResolver', chainId, name }] as const
+type QueryKeyArgs = UseEnsResolverArgs
+type QueryKeyConfig = Pick<UseEnsResolverConfig, 'cacheKey'>
+
+function queryKey({ chainId, cacheKey, name }: QueryKeyArgs & QueryKeyConfig) {
+  return [{ entity: 'ensResolver', chainId, cacheKey, name }] as const
+}
 
 const queryFn = ({
   queryKey: [{ chainId, name }],
@@ -29,6 +27,7 @@ const queryFn = ({
 export function useEnsResolver({
   cacheTime,
   chainId: chainId_,
+  cacheKey,
   enabled = true,
   name,
   staleTime = 1_000 * 60 * 60 * 24, // 24 hours
@@ -39,7 +38,7 @@ export function useEnsResolver({
 }: UseEnsResolverArgs & UseEnsResolverConfig = {}) {
   const chainId = useChainId({ chainId: chainId_ })
 
-  return useQuery(queryKey({ chainId, name }), queryFn, {
+  return useQuery(queryKey({ chainId, cacheKey, name }), queryFn, {
     cacheTime,
     enabled: Boolean(enabled && chainId && name),
     staleTime,

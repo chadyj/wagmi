@@ -27,15 +27,17 @@ export type UseContractInfiniteReadsConfig<
   ]
 } & InfiniteQueryConfig<ReadContractsResult<TContracts>, Error>
 
+type QueryKeyArgs = {
+  allowFailure: UseContractInfiniteReadsConfig['allowFailure']
+  overrides: UseContractInfiniteReadsConfig['overrides']
+}
+type QueryKeyConfig = Pick<UseContractInfiniteReadsConfig, 'cacheKey'>
+
 function queryKey({
   allowFailure,
   cacheKey,
   overrides,
-}: {
-  allowFailure: UseContractInfiniteReadsConfig['allowFailure']
-  cacheKey: UseContractInfiniteReadsConfig['cacheKey']
-  overrides: UseContractInfiniteReadsConfig['overrides']
-}) {
+}: QueryKeyArgs & QueryKeyConfig) {
   return [
     {
       entity: 'readContractsInfinite',

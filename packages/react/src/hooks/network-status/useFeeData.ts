@@ -5,19 +5,22 @@ import { QueryConfig, QueryFunctionArgs } from '../../types'
 import { useBlockNumber } from '../network-status'
 import { useChainId, useQuery } from '../utils'
 
-type UseFeeDataArgs = Partial<FetchFeeDataArgs> & {
+export type UseFeeDataArgs = Partial<FetchFeeDataArgs> & {
   /** Subscribe to changes */
   watch?: boolean
 }
-
 export type UseFeedDataConfig = QueryConfig<FetchFeeDataResult, Error>
 
-export const queryKey = ({
+type QueryKeyArgs = Partial<FetchFeeDataArgs>
+type QueryKeyConfig = Pick<UseFeedDataConfig, 'cacheKey'>
+
+function queryKey({
+  cacheKey,
   chainId,
   formatUnits,
-}: Partial<FetchFeeDataArgs> & {
-  chainId?: number
-}) => [{ entity: 'feeData', chainId, formatUnits }] as const
+}: QueryKeyArgs & QueryKeyConfig) {
+  return [{ entity: 'feeData', cacheKey, chainId, formatUnits }] as const
+}
 
 const queryFn = ({
   queryKey: [{ chainId, formatUnits }],
@@ -26,6 +29,7 @@ const queryFn = ({
 }
 
 export function useFeeData({
+  cacheKey,
   cacheTime,
   chainId: chainId_,
   enabled = true,
@@ -39,15 +43,19 @@ export function useFeeData({
 }: UseFeeDataArgs & UseFeedDataConfig = {}) {
   const chainId = useChainId({ chainId: chainId_ })
 
-  const feeDataQuery = useQuery(queryKey({ chainId, formatUnits }), queryFn, {
-    cacheTime,
-    enabled,
-    staleTime,
-    suspense,
-    onError,
-    onSettled,
-    onSuccess,
-  })
+  const feeDataQuery = useQuery(
+    queryKey({ cacheKey, chainId, formatUnits }),
+    queryFn,
+    {
+      cacheTime,
+      enabled,
+      staleTime,
+      suspense,
+      onError,
+      onSettled,
+      onSuccess,
+    },
+  )
 
   const { data: blockNumber } = useBlockNumber({ chainId, watch })
   React.useEffect(() => {

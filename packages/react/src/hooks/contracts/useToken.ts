@@ -4,16 +4,24 @@ import { QueryConfig, QueryFunctionArgs } from '../../types'
 import { useChainId, useQuery } from '../utils'
 
 export type UseTokenArgs = Partial<FetchTokenArgs>
-
 export type UseTokenConfig = QueryConfig<FetchTokenResult, Error>
 
-export const queryKey = ({
+type QueryKeyArgs = Partial<FetchTokenArgs> & {
+  chainId?: number
+}
+type QueryKeyConfig = Pick<UseTokenConfig, 'cacheKey'> & {
+  activeChainId?: number
+  signerAddress?: string
+}
+
+function queryKey({
   address,
   chainId,
+  cacheKey,
   formatUnits,
-}: Partial<FetchTokenArgs> & {
-  chainId?: number
-}) => [{ entity: 'token', address, chainId, formatUnits }] as const
+}: QueryKeyArgs & QueryKeyConfig) {
+  return [{ entity: 'token', address, chainId, cacheKey, formatUnits }] as const
+}
 
 const queryFn = ({
   queryKey: [{ address, chainId, formatUnits }],
@@ -27,6 +35,7 @@ export function useToken({
   chainId: chainId_,
   formatUnits = 'ether',
   cacheTime,
+  cacheKey,
   enabled = true,
   staleTime = 1_000 * 60 * 60 * 24, // 24 hours
   suspense,
@@ -36,13 +45,17 @@ export function useToken({
 }: UseTokenArgs & UseTokenConfig = {}) {
   const chainId = useChainId({ chainId: chainId_ })
 
-  return useQuery(queryKey({ address, chainId, formatUnits }), queryFn, {
-    cacheTime,
-    enabled: Boolean(enabled && address),
-    staleTime,
-    suspense,
-    onError,
-    onSettled,
-    onSuccess,
-  })
+  return useQuery(
+    queryKey({ address, chainId, cacheKey, formatUnits }),
+    queryFn,
+    {
+      cacheTime,
+      enabled: Boolean(enabled && address),
+      staleTime,
+      suspense,
+      onError,
+      onSettled,
+      onSuccess,
+    },
+  )
 }

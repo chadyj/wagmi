@@ -28,18 +28,15 @@ export type UsePrepareContractWriteConfig<
 > &
   QueryConfig<PrepareWriteContractResult, Error>
 
+type QueryKeyArgs = Omit<PrepareWriteContractConfig, 'abi'>
+type QueryKeyConfig = Pick<UsePrepareContractWriteConfig, 'cacheKey'> & {
+  activeChainId?: number
+  signerAddress?: string
+}
+
 function queryKey(
-  {
-    args,
-    address,
-    chainId,
-    functionName,
-    overrides,
-  }: Omit<PrepareWriteContractConfig, 'abi'>,
-  {
-    activeChainId,
-    signerAddress,
-  }: { activeChainId?: number; signerAddress?: string },
+  { args, address, chainId, functionName, overrides }: QueryKeyArgs,
+  { activeChainId, signerAddress }: QueryKeyConfig,
 ) {
   return [
     {

@@ -62,7 +62,9 @@ export type QueryConfig<Data, Error> = Pick<
   | 'onError'
   | 'onSettled'
   | 'onSuccess'
->
+> & {
+  cacheKey?: string
+}
 
 export type InfiniteQueryConfig<Data, Error> = Pick<
   UseInfiniteQueryOptions<Data, Error>,
@@ -77,7 +79,9 @@ export type InfiniteQueryConfig<Data, Error> = Pick<
   | 'onError'
   | 'onSettled'
   | 'onSuccess'
->
+> & {
+  cacheKey?: string
+}
 
 export type MutationConfig<Data, Error, Variables = void> = {
   /** Function fires if mutation encounters error */

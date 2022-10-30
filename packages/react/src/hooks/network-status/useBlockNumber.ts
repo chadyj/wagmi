@@ -10,17 +10,20 @@ import { QueryConfig, QueryFunctionArgs } from '../../types'
 import { useProvider, useWebSocketProvider } from '../providers'
 import { useChainId, useQuery, useQueryClient } from '../utils'
 
-type UseBlockNumberArgs = Partial<FetchBlockNumberArgs> & {
+export type UseBlockNumberArgs = Partial<FetchBlockNumberArgs> & {
   /** Function fires when a new block is created */
   onBlock?: (blockNumber: number) => void
   /** Subscribe to changes */
   watch?: boolean
 }
-
 export type UseBlockNumberConfig = QueryConfig<FetchBlockNumberResult, Error>
 
-export const queryKey = ({ chainId }: { chainId?: number }) =>
-  [{ entity: 'blockNumber', chainId }] as const
+type QueryKeyArgs = Partial<FetchBlockNumberArgs>
+type QueryKeyConfig = Pick<UseBlockNumberConfig, 'cacheKey'>
+
+function queryKey({ chainId, cacheKey }: QueryKeyArgs & QueryKeyConfig) {
+  return [{ entity: 'blockNumber', chainId, cacheKey }] as const
+}
 
 const queryFn = ({
   queryKey: [{ chainId }],
@@ -31,6 +34,7 @@ const queryFn = ({
 export function useBlockNumber({
   cacheTime = 0,
   chainId: chainId_,
+  cacheKey,
   enabled = true,
   staleTime,
   suspense,
@@ -56,7 +60,8 @@ export function useBlockNumber({
     const listener = debounce((blockNumber: number) => {
       // Just to be safe in case the provider implementation
       // calls the event callback after .off() has been called
-      if (watch) queryClient.setQueryData(queryKey({ chainId }), blockNumber)
+      if (watch)
+        queryClient.setQueryData(queryKey({ chainId, cacheKey }), blockNumber)
       if (onBlock) onBlock(blockNumber)
     }, 1)
 
@@ -66,7 +71,15 @@ export function useBlockNumber({
     return () => {
       provider_.off('block', listener)
     }
-  }, [chainId, onBlock, provider, queryClient, watch, webSocketProvider])
+  }, [
+    chainId,
+    cacheKey,
+    onBlock,
+    provider,
+    queryClient,
+    watch,
+    webSocketProvider,
+  ])
 
   return useQuery(queryKey({ chainId }), queryFn, {
     cacheTime,
